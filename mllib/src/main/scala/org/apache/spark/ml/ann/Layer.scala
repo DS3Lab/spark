@@ -365,8 +365,7 @@ private[ann] trait TopologyModel extends Serializable {
    *                         MultilayerPerceptronClassifier, the last layer is always softmax;
    *                         the last layer of outputs is needed for class predictions, but not
    *                         for rawPrediction.
-   *
-   * @return array of outputs for each of the layers
+    * @return array of outputs for each of the layers
    */
   def forward(data: BDM[Double], includeLastLayer: Boolean): Array[BDM[Double]]
 
@@ -626,6 +625,18 @@ private[ann] class ANNGradient(topology: Topology, dataStacker: DataStacker) ext
     val model = topology.model(weights)
     model.computeGradient(input, target, cumGradient, realBatchSize)
   }
+
+  // TODO: fill this method. Or make sure this method will never be called by others. zhipeng---
+ override def updateModelUseOneData(data: OldVector, label: Double, weights: OldVector, stepSize: Double,
+                                    factor: Double = 1): Double = {
+    0.0
+  }
+
+  // TODO: fill this method. Or make sure this method will never be called by others. zhipeng---
+  override def computeLoss(data: OldVector, label: Double, weights: OldVector): Double = {
+    0.0
+  }
+
 }
 
 /**
@@ -695,15 +706,20 @@ private[ann] class DataStacker(stackSize: Int, inputSize: Int, outputSize: Int)
 private[ann] class ANNUpdater extends Updater {
 
   override def compute(
-    weightsOld: OldVector,
-    gradient: OldVector,
-    stepSize: Double,
-    iter: Int,
-    regParam: Double): (OldVector, Double) = {
+                        weightsOld: OldVector,
+                        gradient: OldVector,
+                        stepSize: Double,
+                        iter: Int,
+                        regParam: Double): (OldVector, Double) = {
     val thisIterStepSize = stepSize
     val brzWeights: BV[Double] = weightsOld.asBreeze.toDenseVector
     Baxpy(-thisIterStepSize, gradient.asBreeze, brzWeights)
     (OldVectors.fromBreeze(brzWeights), 0)
+  }
+
+  // TODO: make sure this one is correctly implemented, or it's never used. --- zhipeng
+  override def getRegVal(weight: OldVector, regParam: Double): Double = {
+    0.0
   }
 }
 
