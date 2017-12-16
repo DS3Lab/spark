@@ -55,6 +55,19 @@ abstract class Gradient extends Serializable {
    * @return loss
    */
   def compute(data: Vector, label: Double, weights: Vector, cumGradient: Vector): Double
+
+  /**
+    * update the model using one sample
+    * @param data features for one data point
+    * @param label label for this data point
+    * @param weights weights/coefficients corresponding to features
+    * @param stepSize learning rate
+    * @param factor real model is factor * weights. But we don't materialize it for SparseL2 update.
+    * @return
+    */
+  def updateModelUseOneData(data: Vector, label: Double, weights: Vector, stepSize: Double, factor : Double = 1): Double
+
+  def computeLoss(data: Vector, label: Double, weights: Vector): Double
 }
 
 /**
@@ -272,6 +285,18 @@ class LogisticGradient(numClasses: Int) extends Gradient {
         }
     }
   }
+  override def updateModelUseOneData(data: Vector, label: Double, weights: Vector, stepSize: Double, factor: Double = 1): Double = {
+    // TODO: to complete this for logistic regression
+    // zhipeng
+    0.0
+  }
+
+  override  def computeLoss(data: Vector, label: Double, weights: Vector): Double = {
+    // TODO: to complete this for logistic regression
+    0
+  }
+
+
 }
 
 /**
@@ -299,6 +324,17 @@ class LeastSquaresGradient extends Gradient {
     val diff = dot(data, weights) - label
     axpy(diff, data, cumGradient)
     diff * diff / 2.0
+  }
+  override def updateModelUseOneData(data: Vector, label: Double, weights: Vector, stepSize: Double, factor: Double = 1): Double = {
+
+      // TODO: to complete this for least square loss
+    // zhipeng
+    0.0
+  }
+
+  override def computeLoss(data: Vector, label: Double, weights: Vector): Double = {
+    // TODO: to complete this for least square loss
+    0
   }
 }
 
@@ -340,5 +376,25 @@ class HingeGradient extends Gradient {
     } else {
       0.0
     }
+  }
+
+  override def updateModelUseOneData(data: Vector, label: Double, weights: Vector, stepSize: Double, factor: Double): Double = {
+    // Note: factor is used for SparseL2 update, here real_weights = weights * factor, but we don't materialize it.
+    val dotProduct = dot(data, weights) * factor
+    val labelScaled = 2 * label - 1.0
+    if(1.0 > labelScaled * dotProduct){
+      axpy(labelScaled * stepSize, data, weights)
+      1.0 - labelScaled * dotProduct
+    }
+    else{
+      0.0
+    }
+  }
+  override def computeLoss(data: Vector, label: Double, weights: Vector): Double = {
+    val tmp_loss = (2 * label - 1.0) * dot(data, weights)
+    if (1.0 > tmp_loss)
+      1.0 - tmp_loss
+    else
+      0.0
   }
 }

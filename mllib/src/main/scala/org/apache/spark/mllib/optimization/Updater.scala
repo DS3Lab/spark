@@ -59,6 +59,9 @@ abstract class Updater extends Serializable {
       stepSize: Double,
       iter: Int,
       regParam: Double): (Vector, Double)
+
+  // zhipeng--- updater should also can return the regVal.
+  def getRegVal(weight: Vector, regParam: Double) : Double
 }
 
 /**
@@ -79,6 +82,11 @@ class SimpleUpdater extends Updater {
     brzAxpy(-thisIterStepSize, gradient.asBreeze, brzWeights)
 
     (Vectors.fromBreeze(brzWeights), 0)
+  }
+
+  override def getRegVal(weight: Vector, regParam: Double) : Double = {
+    // TODO: zhipeng -- to implement this function
+    0.0
   }
 }
 
@@ -125,6 +133,11 @@ class L1Updater extends Updater {
 
     (Vectors.fromBreeze(brzWeights), brzNorm(brzWeights, 1.0) * regParam)
   }
+
+  override def getRegVal(weight: Vector, regParam: Double) : Double = {
+    // regval given by L1 norm, is the regparam * L1 norm
+    regParam * brzNorm(weight.asBreeze, 1.0)
+  }
 }
 
 /**
@@ -145,7 +158,9 @@ class SquaredL2Updater extends Updater {
     // the gradient of the regularizer (= regParam * weightsOld)
     // w' = w - thisIterStepSize * (gradient + regParam * w)
     // w' = (1 - thisIterStepSize * regParam) * w - thisIterStepSize * gradient
-    val thisIterStepSize = stepSize / math.sqrt(iter)
+    val thisIterStepSize = stepSize
+    // zhipeng ---- make this constant learning rate for better tunning.
+//    val thisIterStepSize = stepSize / math.sqrt(iter)
     val brzWeights: BV[Double] = weightsOld.asBreeze.toDenseVector
     brzWeights :*= (1.0 - thisIterStepSize * regParam)
     brzAxpy(-thisIterStepSize, gradient.asBreeze, brzWeights)
@@ -153,5 +168,11 @@ class SquaredL2Updater extends Updater {
 
     (Vectors.fromBreeze(brzWeights), 0.5 * regParam * norm * norm)
   }
-}
+
+  override def getRegVal(weight: Vector, regParam: Double) : Double = {
+    val tmp_norm = brzNorm(weight.asBreeze, 2)
+    tmp_norm * tmp_norm * 0.5 * regParam
+  }
+
+  }
 
